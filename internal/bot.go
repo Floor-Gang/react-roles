@@ -12,14 +12,18 @@ type Bot struct {
 	client  *discordgo.Session
 	confLoc string
 	auth    auth.AuthClient
+	db		Controller
 }
 
 func Start(config Config, configLocation string) {
+	// Setup the database
+	database := GetController(config.DBLocation)
+
 	// Setup Discord
 	client, _ := discordgo.New("Bot " + config.Token)
 
 	// This is required
-	intents := discordgo.MakeIntent(discordgo.IntentsGuildMembers + discordgo.IntentsGuildMessages)
+	intents := discordgo.MakeIntent(discordgo.IntentsGuildMembers + discordgo.IntentsGuildMessages + discordgo.IntentsGuildMessageReactions)
 	client.Identify.Intents = intents
 
 	// Setup Authentication client
@@ -35,6 +39,7 @@ func Start(config Config, configLocation string) {
 		client:  client,
 		confLoc: configLocation,
 		auth:    authClient,
+		db: database,
 	}
 
 	// Add event listeners
@@ -53,7 +58,7 @@ func (b *Bot) onReady(_ *discordgo.Session, ready *discordgo.Ready) {
 }
 
 func (b *Bot) onReactionAdd(_ *discordgo.Session, reaction *discordgo.MessageReactionAdd) {
-	fmt.Println(fmt.Sprintf("Reaction added %s", reaction.MessageID))
+	//
 }
 
 func (b *Bot) onReactionRemove(_ *discordgo.Session, reaction *discordgo.MessageReactionRemove) {

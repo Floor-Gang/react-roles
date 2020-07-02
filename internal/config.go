@@ -10,6 +10,7 @@ type Config struct {
 	Token               string   `yaml:"token"`
 	Prefix              string   `yaml:"prefix"`
 	Auth                string   `yaml:"auth_server"`
+	DBLocation          string   `yaml:"db_location"`
 }
 
 // This will get the current configuration file. If it doesn't exist then a
@@ -19,6 +20,7 @@ func GetConfig(location string) (config Config) {
 		Token:               "",
 		Prefix:              ".rr",
 		Auth:                "",
+		DBLocation:          "./roles.db",
 	}
 	err := util.GetConfig(location, &config)
 
