@@ -8,21 +8,19 @@ The commands to use this service are as follows:
 
 ```
 # Add a role-reaction to a message
-.[syntax command] add (channel*) [message id] | [emoij] [role]
+.[syntax command] add (channel*) [message id] [emoij] [role]
 
 # Remove role-reaction from a message
-.[syntax command] remove (channel*) [message id] | [emoij]
+.[syntax command] remove (channel*) [message id] [emoij]
 ```
 
 # Database layout
 
 This will make the rules as dynamic as possible.
 
-| id | channel_id         | message_id         | reaction           | role               | created_at |
-|----|--------------------|--------------------|--------------------|--------------------|------------|
-| 1  | 727571348297089086 | 727571348297089086 | 728026421494022266 | 725544860303622164 | 07-02-2020 |
-| 2  | 727571365531484291 | 727571348297089086 | 728026421494022266 | 725544860303622164 | 07-02-2020 |
-| 3  | 727571366567739473 | 727571348297089086 | 728026421494022266 | 725544860303622164 | 07-02-2020 |
+| id | guild_id | channel_id | message_id | reaction | role |
+|----|----------|------------|------------|----------|------|
+| 1  | guild    | channel    | message    | emoij    | role |
 
 # Setup
 Download golang if you haven't already at https://golang.org/dl/ after that install the packages 

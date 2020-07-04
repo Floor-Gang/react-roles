@@ -11,7 +11,7 @@ type Controller struct {
 }
 
 type Roles struct {
-    channelID, messageID, reaction, role string
+    GuildID, channelID, messageID, reaction, role string
 }
 
 // This will get a new database controller
@@ -40,23 +40,35 @@ func GetController(location string) Controller {
 // This initializes the database table if it doesn't exist
 func (c Controller) init() error {
     _, err := c.db.Exec(
-        "CREATE TABLE IF NOT EXISTS roles (id INTEGER  PRIMARY  KEY , channel_id TEXT, message_id TEXT, reaction TEXT, role TEXT)",
+        "CREATE TABLE IF NOT EXISTS roles (id INTEGER  PRIMARY  KEY , guild_id TEXT, channel_id TEXT, message_id TEXT, reaction TEXT, role TEXT)",
     )
 
     return err
 }
 
 // Create a new role reaction row
-func (c Controller) createRoleReaction(channelID string, messageID string, reaction string, role string) error {
+func (c Controller) createRoleReaction(guildID string, channelID string, messageID string, reaction string, role string) error {
     statement, err := c.db.Prepare(
-        "INSERT INTO roles (channel_id, message_id, reaction, role) VALUES (?, ?, ?, ?)",
+        "INSERT INTO roles (guild_id, channel_id, message_id, reaction, role) VALUES (?, ?, ?, ?, ?)",
     )
 
     if err != nil {
         return err
     }
 
-    _, err  = statement.Exec(channelID, messageID, reaction, role)
+    _, err  = statement.Exec(guildID, channelID, messageID, reaction, role)
+
+    return err
+}
+
+func (c Controller) removeRoleReaction(guildID string, channelID string, messageID string, reaction string) error {
+    statement, err := c.db.Prepare("DELETE FROM roles WHERE guild_id = ? AND channel_id = ? AND message_id = ? AND reaction = ?")
+
+    if err != nil {
+        return err
+    }
+
+    _, err = statement.Exec(guildID, channelID, messageID, reaction)
 
     return err
 }
@@ -65,7 +77,7 @@ func (c Controller) createRoleReaction(channelID string, messageID string, react
 func (c Controller) getAll() ([]Roles, error) {
     var result []Roles
 
-    request, err := c.db.Query("SELECT * FROM roles")
+    request, err := c.db.Query("SELECT guild_id, channel_id, message_id, reaction, role FROM roles")
 
     if err != nil {
         return result, err
@@ -73,13 +85,14 @@ func (c Controller) getAll() ([]Roles, error) {
 
     for request.Next() {
         roles := Roles{
+          GuildID: "",
           channelID: "",
           messageID: "",
           reaction: "",
           role: "",
         }
 
-        err := request.Scan(&roles.channelID, &roles.messageID, &roles.reaction, &roles.role)
+        err := request.Scan(&roles.GuildID, &roles.channelID, &roles.messageID, &roles.reaction, &roles.role)
 
         if err != nil {
             return result, err

@@ -5,6 +5,7 @@ import (
 	auth "github.com/Floor-Gang/authclient"
 	"github.com/bwmarrin/discordgo"
 	"log"
+	"regexp"
 )
 
 type Bot struct {
@@ -58,11 +59,43 @@ func (b *Bot) onReady(_ *discordgo.Session, ready *discordgo.Ready) {
 }
 
 func (b *Bot) onReactionAdd(_ *discordgo.Session, reaction *discordgo.MessageReactionAdd) {
-	//
+	data, err := b.db.getAll()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, data := range data {
+		compareEmoij := (regexp.MustCompile(`:(.*?):`)).ReplaceAllString(data.reaction, "")
+
+		if data.messageID == reaction.MessageID && data.channelID == reaction.ChannelID && data.GuildID == reaction.GuildID && reaction.Emoji.ID == compareEmoij {
+			err = b.client.GuildMemberRoleAdd(reaction.GuildID, reaction.UserID, data.role)
+
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	}
 }
 
 func (b *Bot) onReactionRemove(_ *discordgo.Session, reaction *discordgo.MessageReactionRemove) {
-	fmt.Println(fmt.Sprintf("Reaction removed %s", reaction.MessageID))
+	data, err := b.db.getAll()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, data := range data {
+		compareEmoij := (regexp.MustCompile(`:(.*?):`)).ReplaceAllString(data.reaction, "")
+
+		if data.messageID == reaction.MessageID && data.channelID == reaction.ChannelID && data.GuildID == reaction.GuildID && reaction.Emoji.ID == compareEmoij {
+			err = b.client.GuildMemberRoleRemove(reaction.GuildID, reaction.UserID, data.role)
+
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	}
 }
 
 func (b Bot) reply(event *discordgo.MessageCreate, context string) (*discordgo.Message, error) {
@@ -73,5 +106,25 @@ func (b Bot) reply(event *discordgo.MessageCreate, context string) (*discordgo.M
 }
 
 func (b Bot) addReaction(message *discordgo.Message, emoij string) error {
-	return b.client.MessageReactionAdd(message.ChannelID, message.ID, ":emoij:" + emoij)
+	return b.client.MessageReactionAdd(message.ChannelID, message.ID, emoij)
+}
+
+func (b Bot) removeReaction(message *discordgo.Message, emoij string) error {
+	// Getting every user that reacted with this specific emoij, up to 5 rate-limit. And it's not suposed to be used when a 1000 people reacted anyways.
+	data, err := b.client.MessageReactions(message.ChannelID, message.ID, emoij, 5, "", "")
+
+	if err != nil {
+		return err
+	}
+
+	for _, item := range data {
+		// Remove their reaction.
+		err = b.client.MessageReactionRemove(message.ChannelID, message.ID, emoij, item.ID)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
 }
