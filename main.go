@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Floor-Gang/subwatch/internal"
+	"github.com/Floor-Gang/react-roles/internal"
 	util "github.com/Floor-Gang/utilpkg"
 )
 
