@@ -1,105 +1,106 @@
 package internal
 
 import (
-    "database/sql"
-    _ "github.com/mattn/go-sqlite3"
-    "os"
+	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
+	"os"
 )
 
 type Controller struct {
-    db *sql.DB
+	db *sql.DB
 }
 
 type Roles struct {
-    GuildID, channelID, messageID, reaction, role string
+	GuildID, channelID, messageID, reaction, role string
 }
 
 // This will get a new database controller
 func GetController(location string) Controller {
-    if _, err := os.Stat(location); err != nil {
-        _, err := os.Create(location)
+	if _, err := os.Stat(location); err != nil {
+		_, err := os.Create(location)
 
-        if err != nil {
-            panic(err)
-        }
-    }
+		if err != nil {
+			panic(err)
+		}
+	}
 
-    db, err := sql.Open("sqlite3", location)
+	db, err := sql.Open("sqlite3", location)
 
-    if err != nil {
-        panic(err)
-    } else {
-        controller := Controller{db: db}
-        if err = controller.init(); err != nil {
-            panic(err)
-        }
-        return controller
-    }
+	if err != nil {
+		panic(err)
+	} else {
+		controller := Controller{db: db}
+		if err = controller.init(); err != nil {
+			panic(err)
+		}
+		return controller
+	}
 }
 
 // This initializes the database table if it doesn't exist
 func (c Controller) init() error {
-    _, err := c.db.Exec(
-        "CREATE TABLE IF NOT EXISTS roles (id INTEGER  PRIMARY  KEY , guild_id TEXT, channel_id TEXT, message_id TEXT, reaction TEXT, role TEXT)",
-    )
+	_, err := c.db.Exec(
+		"CREATE TABLE IF NOT EXISTS roles (id INTEGER  PRIMARY  KEY , guild_id TEXT, channel_id TEXT, message_id TEXT, reaction TEXT, role TEXT)",
+	)
 
-    return err
+	return err
 }
 
 // Create a new role reaction row
 func (c Controller) createRoleReaction(guildID string, channelID string, messageID string, reaction string, role string) error {
-    statement, err := c.db.Prepare(
-        "INSERT INTO roles (guild_id, channel_id, message_id, reaction, role) VALUES (?, ?, ?, ?, ?)",
-    )
+	statement, err := c.db.Prepare(
+		"INSERT INTO roles (guild_id, channel_id, message_id, reaction, role) VALUES (?, ?, ?, ?, ?)",
+	)
 
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
-    _, err  = statement.Exec(guildID, channelID, messageID, reaction, role)
+	_, err = statement.Exec(guildID, channelID, messageID, reaction, role)
 
-    return err
+	return err
 }
 
+// TODO: only use message_id and reaction_id
 func (c Controller) removeRoleReaction(guildID string, channelID string, messageID string, reaction string) error {
-    statement, err := c.db.Prepare("DELETE FROM roles WHERE guild_id = ? AND channel_id = ? AND message_id = ? AND reaction = ?")
+	statement, err := c.db.Prepare("DELETE FROM roles WHERE guild_id = ? AND channel_id = ? AND message_id = ? AND reaction = ?")
 
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
-    _, err = statement.Exec(guildID, channelID, messageID, reaction)
+	_, err = statement.Exec(guildID, channelID, messageID, reaction)
 
-    return err
+	return err
 }
 
 // Get all
 func (c Controller) getAll() ([]Roles, error) {
-    var result []Roles
+	var result []Roles
 
-    request, err := c.db.Query("SELECT guild_id, channel_id, message_id, reaction, role FROM roles")
+	request, err := c.db.Query("SELECT guild_id, channel_id, message_id, reaction, role FROM roles")
 
-    if err != nil {
-        return result, err
-    }
+	if err != nil {
+		return result, err
+	}
 
-    for request.Next() {
-        roles := Roles{
-          GuildID: "",
-          channelID: "",
-          messageID: "",
-          reaction: "",
-          role: "",
-        }
+	for request.Next() {
+		roles := Roles{
+			GuildID:   "",
+			channelID: "",
+			messageID: "",
+			reaction:  "",
+			role:      "",
+		}
 
-        err := request.Scan(&roles.GuildID, &roles.channelID, &roles.messageID, &roles.reaction, &roles.role)
+		err := request.Scan(&roles.GuildID, &roles.channelID, &roles.messageID, &roles.reaction, &roles.role)
 
-        if err != nil {
-            return result, err
-        } else {
-            result = append(result, roles)
-        }
-    }
+		if err != nil {
+			return result, err
+		} else {
+			result = append(result, roles)
+		}
+	}
 
-    return result, nil
+	return result, nil
 }

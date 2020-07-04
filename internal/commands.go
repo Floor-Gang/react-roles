@@ -24,13 +24,15 @@ func (b *Bot) onMessage(_ *dg.Session, message *dg.MessageCreate) {
 	//	log.Printf("Failed to authentication \"%s\", because\n%s", message.Author.ID, err.Error())
 	//}
 
+	// TODO: help register
+
+	// Make sure only actual relevant arguments get passed along
+	passArgs := removeFromSlice("add", append(args[1:]))
+
 	switch args[1] {
 	case "add":
-		// Make sure only actual relevant arguments get passed along
-		args = removeFromSlice("add", append(args[1:]))
-
 		if len(args) >= 3 && len(args) <= 4 {
-			messageResponse := b.addRole(args, message.Author.ID, message.GuildID, message.ChannelID)
+			messageResponse := b.addReactionRole(passArgs, message.GuildID, message.ChannelID)
 			_, _ = b.reply(message, messageResponse)
 		} else {
 			_, _ = b.reply(message, fmt.Sprintf("**Invalid syntax** ``%s add (channel*) [message id] [emoij] [role]``", b.config.Prefix))
@@ -38,11 +40,8 @@ func (b *Bot) onMessage(_ *dg.Session, message *dg.MessageCreate) {
 
 		break
 	case "remove":
-		// Make sure only actual relevant arguments get passed along
-		args = removeFromSlice("add", append(args[1:]))
-
 		if len(args) >= 2 && len(args) <= 3 {
-			_ = b.removeRole(args, message.GuildID, message.ChannelID)
+			_ = b.removeReactionRole(passArgs, message.GuildID, message.ChannelID)
 		} else {
 			_, _ = b.reply(message, fmt.Sprintf("**Invalid syntax** ``%s remove (channel*) [message id] [emoij]``", b.config.Prefix))
 		}
@@ -51,7 +50,7 @@ func (b *Bot) onMessage(_ *dg.Session, message *dg.MessageCreate) {
 	}
 }
 
-func (b *Bot) addRole(args []string, userID string, guildID string, channelID string) string {
+func (b *Bot) addReactionRole(args []string, guildID string, channelID string) string {
 	defaultErrorMessage := fmt.Sprintf("**Invalid syntax** ``%s add (channel*) [message id] [emoij] [role]``", b.config.Prefix)
 
 	if len(args) == 3 {
@@ -98,7 +97,7 @@ func (b *Bot) addRole(args []string, userID string, guildID string, channelID st
 	return "added role-reaction to successfully!"
 }
 
-func (b *Bot) removeRole(args []string, guildID string, channelID string) string {
+func (b *Bot) removeReactionRole(args []string, guildID string, channelID string) string {
 	defaultErrorMessage := fmt.Sprintf("**Invalid syntax** ``%s remove (channel*) [message id] [emoij]``", b.config.Prefix)
 
 	if len(args) == 2 {
@@ -149,5 +148,5 @@ func (b *Bot) removeRole(args []string, guildID string, channelID string) string
 		}
 	}
 
-	return "Removed the emoij from the message"
+	return "Removed the emoji from the message"
 }

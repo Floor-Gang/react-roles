@@ -13,7 +13,7 @@ type Bot struct {
 	client  *discordgo.Session
 	confLoc string
 	auth    auth.AuthClient
-	db		Controller
+	db      Controller
 }
 
 func Start(config Config, configLocation string) {
@@ -40,7 +40,7 @@ func Start(config Config, configLocation string) {
 		client:  client,
 		confLoc: configLocation,
 		auth:    authClient,
-		db: database,
+		db:      database,
 	}
 
 	// Add event listeners
@@ -66,9 +66,13 @@ func (b *Bot) onReactionAdd(_ *discordgo.Session, reaction *discordgo.MessageRea
 	}
 
 	for _, data := range data {
-		compareEmoij := (regexp.MustCompile(`:(.*?):`)).ReplaceAllString(data.reaction, "")
+		compareEmoji := (regexp.MustCompile(`:(.*?):`)).ReplaceAllString(data.reaction, "")
 
-		if data.messageID == reaction.MessageID && data.channelID == reaction.ChannelID && data.GuildID == reaction.GuildID && reaction.Emoji.ID == compareEmoij {
+		if data.messageID != reaction.MessageID && data.channelID != reaction.ChannelID {
+			continue
+		}
+
+		if data.GuildID == reaction.GuildID && reaction.Emoji.ID == compareEmoji {
 			err = b.client.GuildMemberRoleAdd(reaction.GuildID, reaction.UserID, data.role)
 
 			if err != nil {
@@ -86,9 +90,13 @@ func (b *Bot) onReactionRemove(_ *discordgo.Session, reaction *discordgo.Message
 	}
 
 	for _, data := range data {
-		compareEmoij := (regexp.MustCompile(`:(.*?):`)).ReplaceAllString(data.reaction, "")
+		compareEmoji := (regexp.MustCompile(`:(.*?):`)).ReplaceAllString(data.reaction, "")
 
-		if data.messageID == reaction.MessageID && data.channelID == reaction.ChannelID && data.GuildID == reaction.GuildID && reaction.Emoji.ID == compareEmoij {
+		if data.messageID == reaction.MessageID && data.channelID == reaction.ChannelID {
+			continue
+		}
+
+		if data.GuildID == reaction.GuildID && reaction.Emoji.ID == compareEmoji {
 			err = b.client.GuildMemberRoleRemove(reaction.GuildID, reaction.UserID, data.role)
 
 			if err != nil {
@@ -98,6 +106,7 @@ func (b *Bot) onReactionRemove(_ *discordgo.Session, reaction *discordgo.Message
 	}
 }
 
+// TODO: Use the util package instead of this
 func (b Bot) reply(event *discordgo.MessageCreate, context string) (*discordgo.Message, error) {
 	return b.client.ChannelMessageSend(
 		event.ChannelID,

@@ -1,14 +1,5 @@
 package internal
 
-func hasRole(target string, list []string) bool {
-	for _, b := range list {
-		if b == target {
-			return true
-		}
-	}
-	return false
-}
-
 func removeFromSlice(removeString string, list []string) []string {
 	indexItem := 0
 
